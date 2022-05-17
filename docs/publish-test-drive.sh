@@ -9,7 +9,9 @@ mkdir -p test-drive
 
 echo "* binary" > test-drive/.gitattributes
 
-cp -R ../src/BlazorTestDrive/bin/Release/net5.0/browser-wasm/publish/wwwroot/* test-drive
+dotnet publish ../src/BlazorTestDrive/BlazorTestDrive.csproj -c Release -o release --nologo
+
+cp -R release/wwwroot/* test-drive
 touch test-drive/.nojekyll
 
 # # Rename the _framework directory to lose the leading underscore, which confuses Jekyll even when you tell it not to be confused.
