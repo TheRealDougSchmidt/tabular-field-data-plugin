@@ -769,6 +769,239 @@ else
             </tbody>
         </table>
     }
+
+    <h3>@($"{nameof(Results.WellIntegrity)} Records({Results.WellIntegrity.Count})")</h3>
+    @if (Results.WellIntegrity.Any())
+    {
+        <table class="RTable">
+            <thead>
+                <tr>
+                    <th>Identifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Results.WellIntegrity)
+                {
+                    <tr>
+                        <td>@item.VisitIdentifier</td>
+                    </tr>
+
+                    @if (item.Item.WellAquiferConnections.Any())
+                    {
+                        <tr>
+                            <td>
+                                <h4>@($"{nameof(item.Item.WellAquiferConnections)} {item.Item.WellAquiferConnections.Count}")</h4>
+                                <table class="RTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Start Date</th>
+                                            <th>Aquifer Connectivity Type</th>
+                                            <th>Inspection Method</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var ac in item.Item.WellAquiferConnections)
+                                        {
+                                            <tr>
+                                                <td>@ac.StartDate</td>
+                                                <td>@ac.WellAquiferConnectivityType</td>
+                                                <td>@ac.WellInspectionMethodType</td>
+                                                <td>@ac.Comments</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (item.Item.WellInspections.Any())
+                    {
+                        <tr>
+                            <td>
+                                <h4>@($"{nameof(item.Item.WellInspections)} {item.Item.WellInspections.Count}")</h4>
+                                <table class="RTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Start Date</th>
+                                            <th>Well Component Type</th>
+                                            <th>Well Condition Type</th>
+                                            <th>Distance From</th>
+                                            <th>Distance To</th>
+                                            <th>Inspection Method</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var i in item.Item.WellInspections)
+                                        {
+                                            <tr>
+                                                <td>@i.StartDate</td>
+                                                <td>@i.WellComponentType</td>
+                                                <td>@i.WellConditionType</td>
+                                                <td>@i.DistanceFrom (@i.DistanceUnitId)</td>
+                                                <td>@i.DistanceTo (@i.DistanceUnitId)</td>
+                                                <td>@i.WellInspectionMethod</td>
+                                                <td>@i.Comments</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (item.Item.WellRedevelopments.Any())
+                    {
+                        <tr>
+                            <td>
+                                <h4>@($"{nameof(item.Item.WellRedevelopments)} {item.Item.WellRedevelopments.Count}")</h4>
+                                <table class="RTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Attempt</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Redevelopment Method Type</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in item.Item.WellRedevelopments)
+                                        {
+                                            <tr>
+                                                <td>@r.Attempt</td>
+                                                <td>@r.StartDate</td>
+                                                <td>@r.EndDate</td>
+                                                <td>@r.WellRedevelopmentMethodType</td>
+                                                <td>@r.Comments</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (item.Item.WellRepairs.Any())
+                    {
+                        <tr>
+                            <td>
+                                <h4>@($"{nameof(item.Item.WellRepairs)} {item.Item.WellRepairs.Count}")</h4>
+                                <table class="RTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Repair Type</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in item.Item.WellRepairs)
+                                        {
+                                            <tr>
+                                                <td>@r.StartDate</td>
+                                                <td>@r.EndDate</td>
+                                                <td>@r.WellRepairType</td>
+                                                <td>@r.Comments</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3>@($"{nameof(Results.HydraulicTests)} ({Results.HydraulicTests.Count})")</h3>
+    @if (Results.HydraulicTests.Any())
+    {
+        <table class="RTable">
+            <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Test Name</th>
+                    <th>Test Context</th>
+                    <th>Test Method</th>
+                    <th>Aquifer Type</th>
+                    <th>Publish</th>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Results.HydraulicTests)
+                {
+                    <tr>
+                        <td>@item.VisitIdentifier</td>
+                        <td>@item.Item.StartDate</td>
+                        <td>@item.Item.EndDate</td>
+                        <td>@item.Item.TestName</td>
+                        <td>@item.Item.TestContext</td>
+                        <td>@item.Item.TestMethod</td>
+                        <td>@item.Item.AquiferType</td>
+                        <td>@item.Item.Publish</td>
+                        <td>@item.Item.Comments</td>
+
+                        @if (item.Item.Results.Any())
+                        {
+                            <td>
+                                <table class="RTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter Id</th>
+                                            <th>Value</th>
+                                            <th>Analysis Method</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in item.Item.Results)
+                                        {
+                                            <tr>
+                                                <td>@r.ParameterId</td>
+                                                <td>@r.Value (@r.UnitId)</td>
+                                                <td>@r.AnalysisMethod</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3>@($"{nameof(Results.ExtendedAttributes)} ({Results.ExtendedAttributes.Count})")</h3>
+    @if (Results.ExtendedAttributes.Any())
+    {
+        <table class="RTable">
+            <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>UniqueId</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Results.ExtendedAttributes)
+                {
+                    <tr>
+                        <td>@item.VisitIdentifier</td>
+                        <td>@item.Item.UniqueId</td>
+                        <td>@item.Item.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 
 @code

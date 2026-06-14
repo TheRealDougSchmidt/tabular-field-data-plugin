@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FieldDataPluginFramework.Context;
+﻿using FieldDataPluginFramework.Context;
+using FieldDataPluginFramework.DataModel;
 using FieldDataPluginFramework.DataModel.Calibrations;
 using FieldDataPluginFramework.DataModel.ControlConditions;
 using FieldDataPluginFramework.DataModel.DischargeActivities;
 using FieldDataPluginFramework.DataModel.GageZeroFlow;
+using FieldDataPluginFramework.DataModel.HydraulicTest;
 using FieldDataPluginFramework.DataModel.Inspections;
 using FieldDataPluginFramework.DataModel.LevelSurveys;
 using FieldDataPluginFramework.DataModel.Readings;
+using FieldDataPluginFramework.DataModel.WellIntegrity;
 
 namespace BlazorTestDrive
 {
@@ -23,6 +23,9 @@ namespace BlazorTestDrive
         public List<(string VisitIdentifier, GageZeroFlowActivity Item)> GageZeroFlows { get; } = new List<(string VisitIdentifier, GageZeroFlowActivity Item)>();
         public List<(string VisitIdentifier, DischargeActivity Item)> Discharges { get; } = new List<(string VisitIdentifier, DischargeActivity Item)>();
         public List<(string VisitIdentifier, LevelSurvey Item)> LevelSurveys { get; } = new List<(string VisitIdentifier, LevelSurvey Item)>();
+        public List<(string VisitIdentifier, WellIntegrity Item)> WellIntegrity { get; } = new List<(string VisitIdentifier, WellIntegrity Item)>();
+        public List<(string VisitIdentifier, HydraulicTest Item)> HydraulicTests { get; } = new List<(string VisitIdentifier, HydraulicTest Item)>();
+        public List<(string VisitIdentifier, ExtendedAttributeValue Item)> ExtendedAttributes { get; } = new List<(string VisitIdentifier, ExtendedAttributeValue Item)>();
 
         public static Results CreateResults(AppendedResults appendedResults)
         {
@@ -55,6 +58,15 @@ namespace BlazorTestDrive
 
             LevelSurveys.AddRange(visits
                 .SelectMany(v => v.LevelSurveys.Select(item => (v.FieldVisitIdentifier, item))));
+
+            WellIntegrity.AddRange(visits
+                .SelectMany(v => v.WellIntegrity.Select(item => (v.FieldVisitIdentifier, item))));
+
+            HydraulicTests.AddRange(visits
+                .SelectMany(v => v.HydraulicTests.Select(item => (v.FieldVisitIdentifier, item))));
+
+            ExtendedAttributes.AddRange(visits
+                .SelectMany(v => v.ExtendedAttributes.Select(item => (v.FieldVisitIdentifier, item))));
         }
     }
 }

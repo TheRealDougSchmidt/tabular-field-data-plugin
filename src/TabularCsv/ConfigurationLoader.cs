@@ -184,6 +184,9 @@ namespace TabularCsv
             nameof(Configuration.AllStartTimes),
             nameof(Configuration.AllTimes),
             nameof(Configuration.AllVolumetricDischarges),
+            nameof(Configuration.AllWellIntegrities),
+            nameof(Configuration.AllHydraulicTests),
+            nameof(Configuration.AllExtendedAttributes),
         };
 
         public static string BestGuess<TItem>(string target, IEnumerable<TItem> items, Func<TItem, string> selector, int maximumGuessDistance = 7, int maximumGuesses = 4)
@@ -684,7 +687,10 @@ namespace TabularCsv
                    && !configuration.AllCalibrations.Any()
                    && !configuration.AllAdcpDischarges.Any()
                    && !configuration.AllPanelDischargeSummaries.Any()
-                   && !configuration.AllLevelSurveys.Any();
+                   && !configuration.AllLevelSurveys.Any()
+                   && !configuration.AllWellIntegrities.Any()
+                   && !configuration.AllHydraulicTests.Any()
+                   && !configuration.AllExtendedAttributes.Any();
         }
     }
 }

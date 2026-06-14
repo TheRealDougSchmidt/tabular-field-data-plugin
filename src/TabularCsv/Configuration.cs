@@ -1,4 +1,8 @@
-﻿using System;
+﻿using FieldDataPluginFramework.DataModel.HydraulicTest;
+using FieldDataPluginFramework.DataModel.PickLists;
+using FieldDataPluginFramework.DataModel.WellIntegrity;
+using FieldDataPluginFramework.Validation;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -83,6 +87,21 @@ namespace TabularCsv
         public List<LevelSurveyDefinition> LevelSurveys { get; set; } = new List<LevelSurveyDefinition>();
         private List<LevelSurveyDefinition> _levelSurveyCache;
         public IEnumerable<LevelSurveyDefinition> AllLevelSurveys => AllDefinitions(ref _levelSurveyCache, LevelSurvey, LevelSurveys);
+
+        public WellIntegrityDefinition WellIntegrity { get; set; }
+        public List<WellIntegrityDefinition> WellIntegrities { get; set; } = new List<WellIntegrityDefinition>();
+        private List<WellIntegrityDefinition> _wellIntegrityCache;
+        public IEnumerable<WellIntegrityDefinition> AllWellIntegrities => AllDefinitions(ref _wellIntegrityCache, WellIntegrity, WellIntegrities);
+
+        public HydraulicTestDefinition HydraulicTest { get; set; }
+        public List<HydraulicTestDefinition> HydraulicTests { get; set; } = new List<HydraulicTestDefinition>();
+        private List<HydraulicTestDefinition> _hydraulicTestCache;
+        public IEnumerable<HydraulicTestDefinition> AllHydraulicTests => AllDefinitions(ref _hydraulicTestCache, HydraulicTest, HydraulicTests);
+
+        public ExtendedAttributeDefinition ExtendedAttribute { get; set; }
+        public List<ExtendedAttributeDefinition> ExtendedAttributes { get; set; } = new List<ExtendedAttributeDefinition>();
+        private List<ExtendedAttributeDefinition> _extendedAttributeCache;
+        public IEnumerable<ExtendedAttributeDefinition> AllExtendedAttributes => AllDefinitions(ref _extendedAttributeCache, ExtendedAttribute, ExtendedAttributes);
 
         public bool IsDisabled => Priority <= 0;
 
@@ -527,5 +546,91 @@ namespace TabularCsv
     {
         public PropertyDefinition MeasuredElevation { get; set; }
         public PropertyDefinition ReferencePointName { get; set; }
+    }
+
+    public class WellIntegrityDefinition : CoreDefinition
+    {
+        public WellAquiferConnectionDefinition WellAquiferConnection { get; set; }
+        public List<WellAquiferConnectionDefinition> WellAquiferConnections { get; set; } = new List<WellAquiferConnectionDefinition>();
+        private List<WellAquiferConnectionDefinition> _connectionCache;
+
+        public IEnumerable<WellAquiferConnectionDefinition> AllWellAquiferConnections => AllDefinitions(ref _connectionCache, WellAquiferConnection, WellAquiferConnections);
+
+        public WellInspectionDefinition WellInspection { get; set; }
+        public List<WellInspectionDefinition> WellInspections { get; set; } = new List<WellInspectionDefinition>();
+        private List<WellInspectionDefinition> _inspectionCache;
+
+        public IEnumerable<WellInspectionDefinition> AllWellInspections => AllDefinitions(ref _inspectionCache, WellInspection, WellInspections);
+
+
+        public WellRedevelopmentDefinition WellRedevelopment { get; set; }
+        public List<WellRedevelopmentDefinition> WellRedevelopments { get; set; } = new List<WellRedevelopmentDefinition>();
+        private List<WellRedevelopmentDefinition> _redevelopmentCache;
+
+        public IEnumerable<WellRedevelopmentDefinition> AllWellRedevelopments => AllDefinitions(ref _redevelopmentCache, WellRedevelopment, WellRedevelopments);
+
+        public WellRepairDefinition WellRepair { get; set; }
+        public List<WellRepairDefinition> WellRepairs { get; set; } = new List<WellRepairDefinition>();
+        private List<WellRepairDefinition> _repairCache;
+
+        public IEnumerable<WellRepairDefinition> AllWellRepairs => AllDefinitions(ref _repairCache, WellRepair, WellRepairs);
+    }
+
+    public class WellAquiferConnectionDefinition : ActivityDefinition
+    {
+        public PropertyDefinition WellAquiferConnectivityType { get; set; }
+        public PropertyDefinition WellInspectionMethodType { get; set; }
+    }
+
+    public class WellInspectionDefinition : ActivityDefinition
+    {
+        public PropertyDefinition WellComponentType { get; set; }
+        public PropertyDefinition WellConditionType { get; set; }
+        public PropertyDefinition WellInspectionMethod { get; set; }
+        public PropertyDefinition DistanceFrom { get; set; }
+        public PropertyDefinition DistanceTo { get; set; }
+        public PropertyDefinition DistanceUnitId { get; set; }
+    }
+
+    public class WellRedevelopmentDefinition : TimeRangeActivityDefinition
+    {
+        public PropertyDefinition WellRedevelopmentMethodType { get; set; }
+        public PropertyDefinition Attempt { get; set; }
+    }
+
+    public class WellRepairDefinition : TimeRangeActivityDefinition
+    {
+        public PropertyDefinition WellRepairType { get; set; }
+    }
+
+    public class HydraulicTestDefinition : TimeRangeActivityDefinition
+    {
+        public PropertyDefinition TestName { get; set; }
+        public PropertyDefinition TestContext { get; set; }
+        public PropertyDefinition TestMethod { get; set; }
+        public PropertyDefinition AquiferType { get; set; }
+        public PropertyDefinition Publish { get; set; }
+
+        // TODO: RelatedTimeSeriesUniqueIds and RelatedFieldVisitIdentifiers - Might not be possible since they are dynamic
+
+        public HydraulicTestResultDefinition HydraulicTestResult { get; set; }
+        public List<HydraulicTestResultDefinition> HydraulicTestResults { get; set; } = new List<HydraulicTestResultDefinition>();
+        private List<HydraulicTestResultDefinition> _resultCache;
+
+        public IEnumerable<HydraulicTestResultDefinition> AllHydraulicTestResults => AllDefinitions(ref _resultCache, HydraulicTestResult, HydraulicTestResults);
+    }
+
+    public class HydraulicTestResultDefinition : CoreDefinition
+    {
+        public PropertyDefinition ParameterId { get; set; }
+        public PropertyDefinition UnitId { get; set; }
+        public PropertyDefinition AnalysisMethod { get; set; }
+        public PropertyDefinition Value { get; set; }
+    }
+
+    public class ExtendedAttributeDefinition : CoreDefinition
+    {
+        public PropertyDefinition AttributeId { get; set; }
+        public PropertyDefinition Value { get; set; }
     }
 }
