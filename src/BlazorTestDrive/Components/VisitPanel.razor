@@ -1,0 +1,633 @@
+@using FieldDataPluginFramework.Context
+@using FieldDataPluginFramework.DataModel
+@using FieldDataPluginFramework.DataModel.Calibrations
+@using FieldDataPluginFramework.DataModel.GageZeroFlow
+@using FieldDataPluginFramework.DataModel.Readings
+@using FieldDataPluginFramework.DataModel.PickLists
+
+@inherits Microsoft.AspNetCore.Components.ComponentBase
+
+@code {
+    private FieldVisitInfo _visit;
+    [Parameter] public FieldVisitInfo Visit
+    {
+        get => _visit;
+        set
+        {
+            _visit = value;
+            SetupTabDisplayNames();
+        }
+    }
+
+    private int SelectedTab { get; set; }
+    private void Select(int index) => SelectedTab = index;
+
+    private enum Tab
+    {
+        Overview = 0,
+        ControlConditions = 1,
+        GageZeroFlows = 2,
+        Readings = 3,
+        Calibrations = 4,
+        Inspections = 5,
+        LevelSurveys = 6,
+        Discharges = 7,
+        WellIntegrity = 8,
+        HydraulicTests = 9,
+        ExtendedAttributes = 10
+    }
+
+    private  Dictionary<Tab, string> TabDisplayNames = new Dictionary<Tab, string>();
+
+    private void SetupTabDisplayNames()
+    {
+        TabDisplayNames.Clear();
+        if (Visit == null) return;
+
+        TabDisplayNames[Tab.Overview] = "Overview";
+        TabDisplayNames[Tab.ControlConditions] = "Control Conditions" + (Visit.ControlConditions.Count > 0 ? $" ({Visit.ControlConditions.Count})" : "");
+        TabDisplayNames[Tab.GageZeroFlows] = "Gage Zero Flows" + (Visit.GageZeroFlowActivities.Count > 0 ? $" ({Visit.GageZeroFlowActivities.Count})" : "");
+        TabDisplayNames[Tab.Readings] = "Readings" + (Visit.Readings.Count > 0 ? $" ({Visit.Readings.Count})" : "");
+        TabDisplayNames[Tab.Calibrations] = "Calibrations" + (Visit.Calibrations.Count > 0 ? $" ({Visit.Calibrations.Count})" : "");
+        TabDisplayNames[Tab.Inspections] = "Inspections" + (Visit.Inspections.Count > 0 ? $" ({Visit.Inspections.Count})" : "");
+        TabDisplayNames[Tab.LevelSurveys] = "Level Surveys" + (Visit.LevelSurveys.Count > 0 ? $" ({Visit.LevelSurveys.Count})" : "");
+        TabDisplayNames[Tab.Discharges] = "Discharges" + (Visit.DischargeActivities.Count > 0 ? $" ({Visit.DischargeActivities.Count})" : "");
+        TabDisplayNames[Tab.WellIntegrity] = "Well Integrity" + (Visit.WellIntegrity.Count > 0 ? $" ({Visit.WellIntegrity.Count})" : "");
+        TabDisplayNames[Tab.HydraulicTests] = "Hydraulic Tests" + (Visit.HydraulicTests.Count > 0 ? $" ({Visit.HydraulicTests.Count})" : "");
+        TabDisplayNames[Tab.ExtendedAttributes] = "Extended Attributes" + (Visit.ExtendedAttributes.Count > 0 ? $" ({Visit.ExtendedAttributes.Count})" : "");
+    }
+
+    private string VisitId => Visit?.FieldVisitIdentifier ?? string.Empty;
+
+    private string VisitSummary()
+    {
+        if (Visit == null) return string.Empty;
+
+        var totalActivities = Visit.ControlConditions.Count + Visit.GageZeroFlowActivities.Count + Visit.Readings.Count +
+                              Visit.Calibrations.Count + Visit.Inspections.Count + Visit.LevelSurveys.Count +
+                              Visit.DischargeActivities.Count + Visit.WellIntegrity.Count + Visit.HydraulicTests.Count;
+
+        return $"{Visit.FieldVisitIdentifier}: {totalActivities} activities";
+    }
+
+    private string CompletedActivities(CompletedVisitActivities activities)
+    {
+        if (activities == null)
+            return null;
+
+        var list = new List<string>();
+
+        if (activities.ConductedLevelSurvey) list.Add("Level Surveys");
+        if (activities.GroundWaterLevels) list.Add("Ground water levels");
+        if (activities.SafetyInspectionPerformed) list.Add("Safety Inspection");
+        if (activities.RecorderDataCollected) list.Add("Recorder data collected");
+        if (activities.WaterQualitySample) list.Add("Water quality samples");
+        if (activities.WaterQualityCrossSection) list.Add("Water quality cross-section");
+        if (activities.SedimentSample) list.Add("Sediment samples");
+        if (activities.BiologicalSample) list.Add("Biological samples");
+        if (activities.OtherSample) list.Add("Other samples");
+
+        if (!list.Any()) list.Add("None");
+
+        return string.Join(", ", list);
+    }
+
+    private string Standard(Calibration calibration)
+    {
+        if (calibration == null || !calibration.Standard.HasValue) return null;
+        return $"{calibration.Standard} (${calibration.UnitId})";
+    }
+
+    private string StandardDetails(StandardDetails details)
+    {
+        if (details == null) return null;
+        var list = new List<string>();
+        if (!string.IsNullOrEmpty(details.LotNumber)) list.Add($"Lot Number: {details.LotNumber}");
+        if (!string.IsNullOrEmpty(details.StandardCode)) list.Add($"Standard Code: {details.StandardCode}");
+        if (details.ExpirationDate.HasValue) list.Add($"Expiration Date: {details.ExpirationDate:O}");
+        if (details.Temperature.HasValue) list.Add($"Temperature: {details.Temperature}");
+        return string.Join(", ", list);
+    }
+
+    private string ReadingValue(Reading reading)
+    {
+        return reading.AdjustmentAmount.HasValue
+            ? $"{reading.Value + reading.AdjustmentAmount} ({reading.UnitId})"
+            : $"{reading.Value} ({reading.UnitId})";
+    }
+
+    private string ReadingObservedValue(Reading reading)
+    {
+        return $"{reading.Value} ({reading.UnitId})";
+    }
+
+    private string ReadingAdjustmentAmount(Reading reading)
+    {
+        return reading.AdjustmentAmount.HasValue ? $"{reading.AdjustmentAmount} ({reading.UnitId})" : null;
+    }
+
+    private string Qualifiers(List<ReadingQualifierPickList> qualifiers)
+    {
+        if (qualifiers == null) return null;
+        return string.Join(", ", qualifiers.Select(q => q.IdOrDisplayName));
+    }
+
+    private string GroundwaterDetails(GroundWaterMeasurementDetails details)
+    {
+        if (details == null) return null;
+        var list = new List<string>();
+        if (details.Cut.HasValue) list.Add($"Cut: {details.Cut}");
+        if (details.Hold.HasValue) list.Add($"Hold: {details.Hold}");
+        if (details.TapeCorrection.HasValue) list.Add($"Tape Correction: {details.TapeCorrection}");
+        if (details.WaterLevel.HasValue) list.Add($"Water Level: {details.WaterLevel}");
+        return string.Join(", ", list);
+    }
+
+    private string GageZeroFlowObservedGageHeight(GageZeroFlowActivity zeroFlow)
+    {
+        return !zeroFlow.Stage.HasValue ? $"{zeroFlow.GageHeight.Value} ({zeroFlow.GageHeight.UnitId})" : null;
+    }
+
+    private string GageZeroFlowCalculatedGageHeight(GageZeroFlowActivity zeroFlow)
+    {
+        return zeroFlow.Stage.HasValue && zeroFlow.WaterDepth.HasValue ? $"{zeroFlow.Stage - zeroFlow.WaterDepth} ({zeroFlow.GageHeight.UnitId})" : null;
+    }
+
+    private string GageZeroFlowStage(GageZeroFlowActivity zeroFlow)
+    {
+        return zeroFlow.Stage.HasValue ? $"{zeroFlow.Stage} ({zeroFlow.GageHeight.UnitId})" : null;
+    }
+
+    private string GageZeroWaterDepth(GageZeroFlowActivity zeroFlow)
+    {
+        return zeroFlow.Stage.HasValue ? $"{zeroFlow.WaterDepth} ({zeroFlow.GageHeight.UnitId})" : null;
+    }
+}
+
+<details class="visit-panel" style="margin-bottom:12px;">
+    <summary style="font-weight:bold; cursor:pointer;">@VisitSummary()</summary>
+    <div style="padding:8px 12px; border:1px solid #ddd; background:#fafafa;">
+        <div style="margin-bottom:8px;">
+            @foreach (var kvp in TabDisplayNames)
+            {
+                <button class="tab-button" style="margin-right:6px; padding:4px 8px;" @onclick="() => Select((int)kvp.Key)">
+                    @kvp.Value
+                </button>
+            }
+        </div>
+
+        <div class="tab-content">
+            @switch ((Tab)SelectedTab)
+            {
+                case Tab.Overview:
+                    <div>
+                        <h4>Overview</h4>
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Identifier</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Party</th>
+                                    <th>Agency</th>
+                                    <th>Comments</th>
+                                    <th>Weather</th>
+                                    <th>Completed Activities</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>@Visit.FieldVisitIdentifier</td>
+                                    <td>@Visit.StartDate</td>
+                                    <td>@Visit.EndDate</td>
+                                    <td>@Visit.Party</td>
+                                    <td>@Visit.FieldVisitDetails.CollectionAgency</td>
+                                    <td>@Visit.FieldVisitDetails.Comments</td>
+                                    <td>@Visit.FieldVisitDetails.Weather</td>
+                                    <td>@CompletedActivities(Visit.FieldVisitDetails.CompletedVisitActivities)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    break;
+
+                case Tab.ControlConditions:
+                    <div>
+                <h4>Control Conditions</h4>
+                        @if (Visit.ControlConditions.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Condition Type</th>
+                                        <th>Control Code</th>
+                                        <th>Distance To Gage</th>
+                                        <th>Control Cleaned</th>
+                                        <th>Date Cleaned</th>
+                                        <th>Party</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.ControlConditions)
+                                    {
+                                        <tr>
+                                            <td>@item.ConditionType?.IdOrDisplayName</td>
+                                            <td>@item.ControlCode?.IdOrDisplayName</td>
+                                            <td>@VisitHelpers.Measurement(item.DistanceToGage)</td>
+                                            <td>@item.ControlCleaned</td>
+                                            <td>@item.DateCleaned</td>
+                                            <td>@item.Party</td>
+                                            <td>@item.Comments</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No control conditions for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.GageZeroFlows:
+                    <div>
+                        <h4>Gage Zero Flows</h4>
+                        @if (Visit.GageZeroFlowActivities.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Observation Date</th>
+                                        <th>Applicable Since Date</th>
+                                        <th>Observed Gage Height</th>
+                                        <th>Calculated Gage Height</th>
+                                        <th>Stage</th>
+                                        <th>Water Depth</th>
+                                        <th>Certainty</th>
+                                        <th>Party</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.GageZeroFlowActivities)
+                                    {
+                                        <tr>
+                                            <td>@item.ObservationDate</td>
+                                            <td>@item.ApplicableSinceDate</td>
+                                            <td>@GageZeroFlowObservedGageHeight(item)</td>
+                                            <td>@GageZeroFlowCalculatedGageHeight(item)</td>
+                                            <td>@GageZeroFlowStage(item)</td>
+                                            <td>@GageZeroWaterDepth(item)</td>
+                                            <td>@item.Certainty</td>
+                                            <td>@item.Party</td>
+                                            <td>@item.Comments</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No gage zero flows for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.Readings:
+                    <div>
+                        <h4>Readings</h4>
+                        @if (Visit.Readings.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Parameter</th>
+                                        <th>Value</th>
+                                        <th>Observed Value</th>
+                                        <th>Adjustment Amount</th>
+                                        <th>Reading Type</th>
+                                        <th>Method</th>
+                                        <th>Grade</th>
+                                        <th>Qualifiers</th>
+                                        <th>Publish</th>
+                                        <th>SubLocation</th>
+                                        <th>Uncertainty</th>
+                                        <th>Use Location Datum As Reference</th>
+                                        <th>Reference Point Name</th>
+                                        <th>Ground Water Details</th>
+                                        <th>Sensor Unique Id</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.Readings)
+                                    {
+                                        <tr>
+                                            <td>@item.DateTimeOffset</td>
+                                            <td>@item.ParameterId</td>
+                                            <td>@ReadingValue(item)</td>
+                                            <td>@ReadingObservedValue(item)</td>
+                                            <td>@ReadingAdjustmentAmount(item)</td>
+                                            <td>@item.ReadingType</td>
+                                            <td>@item.Method</td>
+                                            <td>@VisitHelpers.Grade(item.Grade)</td>
+                                            <td>@Qualifiers(item.ReadingQualifiers)</td>
+                                            <td>@item.Publish</td>
+                                            <td>@item.SubLocation</td>
+                                            <td>@item.Uncertainty</td>
+                                            <td>@item.UseLocationDatumAsReference</td>
+                                            <td>@item.ReferencePointName</td>
+                                            <td>@GroundwaterDetails(item.GroundWaterMeasurementDetails)</td>
+                                            <td>@item.SensorUniqueId</td>
+                                            <td>@item.Comments</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No readings for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.Calibrations:
+                    <div>
+                        <h4>Calibrations</h4>
+                        @if (Visit.Calibrations.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>CalibrationType</th>
+                                        <th>Parameter</th>
+                                        <th>Value</th>
+                                        <th>Measurement Device</th>
+                                        <th>Standard</th>
+                                        <th>Standard Details</th>
+                                        <th>SubLocation</th>
+                                        <th>Publish</th>
+                                        <th>Party</th>
+                                        <th>Sensor Unique Id</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.Calibrations)
+                                    {
+                                        <tr>
+                                            <td>@item.DateTimeOffset</td>
+                                            <td>@item.CalibrationType</td>
+                                            <td>@item.ParameterId</td>
+                                            <td>@item.Value (@item.UnitId)</td>
+                                            <td>@VisitHelpers.MeasurementDevice(item.MeasurementDevice)</td>
+                                            <td>@Standard(item)</td>
+                                            <td>@StandardDetails(item.StandardDetails)</td>
+                                            <td>@item.SubLocation</td>
+                                            <td>@item.Publish</td>
+                                            <td>@item.Party</td>
+                                            <td>@item.SensorUniqueId</td>
+                                            <td>@item.Comments</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No calibrations for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.Inspections:
+                    <div>
+                        <h4>Inspections</h4>
+                        @if (Visit.Inspections.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>InspectionType</th>
+                                        <th>Measurement Device</th>
+                                        <th>SubLocation</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.Inspections)
+                                    {
+                                        <tr>
+                                            <td>@item.DateTimeOffset</td>
+                                            <td>@item.InspectionType</td>
+                                            <td>@VisitHelpers.MeasurementDevice(item.MeasurementDevice)</td>
+                                            <td>@item.SubLocation</td>
+                                            <td>@item.Comments</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No inspections for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.LevelSurveys:
+                    <div>
+                        <h4>Level Surveys</h4>
+                        @if (Visit.LevelSurveys.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>OriginReferencePoint</th>
+                                        <th>Method</th>
+                                        <th>Party</th>
+                                        <th>Survey Period</th>
+                                        <th>Measurements</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.LevelSurveys)
+                                    {
+                                        <tr>
+                                            <td>@item.OriginReferencePointName</td>
+                                            <td>@item.Method</td>
+                                            <td>@item.Party</td>
+                                            <td>@item.SurveyPeriod.Start - @item.SurveyPeriod.End</td>
+                                            <td>
+                                                @if (item.LevelSurveyMeasurements.Any())
+                                                {
+                                                    <table class="RTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Time</th>
+                                                                <th>Reference Point Name</th>
+                                                                <th>Measured Elevation</th>
+                                                                <th>Comments</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var m in item.LevelSurveyMeasurements)
+                                                            {
+                                                                <tr>
+                                                                    <td>@m.MeasurementTime</td>
+                                                                    <td>@m.ReferencePointName</td>
+                                                                    <td>@m.MeasuredElevation</td>
+                                                                    <td>@m.Comments</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No level surveys for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.Discharges:
+                    <div>
+                        <h4>Discharges</h4>
+                        @if (Visit.DischargeActivities.Any())
+                        {
+                            @foreach (var item in Visit.DischargeActivities)
+                            {
+                                <DischargeActivityPanel Activity="item" />
+                            }
+                        }
+                        else
+                        {
+                            <div>No discharge activities for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.WellIntegrity:
+                    <div>
+                        <h4>Well Integrity</h4>
+                        @if (Visit.WellIntegrity.Any())
+                        {
+                            @foreach (var item in Visit.WellIntegrity)
+                            {
+                                <div style="margin-bottom:8px;">
+                                    @if (item.WellAquiferConnections.Any())
+                                    {
+                                        <h5>@($"WellAquiferConnections {item.WellAquiferConnections.Count}")</h5>
+                                        <table class="RTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Start Date</th>
+                                                    <th>Aquifer Connectivity Type</th>
+                                                    <th>Inspection Method</th>
+                                                    <th>Comments</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var ac in item.WellAquiferConnections)
+                                                {
+                                                    <tr>
+                                                        <td>@ac.StartDate</td>
+                                                        <td>@ac.WellAquiferConnectivityType</td>
+                                                        <td>@ac.WellInspectionMethodType</td>
+                                                        <td>@ac.Comments</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div>No well integrity records for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.HydraulicTests:
+                    <div>
+                        <h4>Hydraulic Tests</h4>
+                        @if (Visit.HydraulicTests.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Test Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.HydraulicTests)
+                                    {
+                                        <tr>
+                                            <td>@item.StartDate</td>
+                                            <td>@item.EndDate</td>
+                                            <td>@item.TestName</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No hydraulic tests for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                case Tab.ExtendedAttributes:
+                    <div>
+                        <h4>Extended Attributes</h4>
+                        @if (Visit.ExtendedAttributes.Any())
+                        {
+                            <table class="RTable">
+                                <thead>
+                                    <tr>
+                                        <th>UniqueId</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Visit.ExtendedAttributes)
+                                    {
+                                        <tr>
+                                            <td>@item.UniqueId</td>
+                                            <td>@item.Value</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div>No extended attributes for this visit.</div>
+                        }
+                    </div>
+                    break;
+
+                default:
+                    <div>Unknown tab</div>
+                    break;
+            }
+        </div>
+    </div>
+</details>

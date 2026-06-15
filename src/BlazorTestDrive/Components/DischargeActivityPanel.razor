@@ -1,0 +1,555 @@
+@using System.Text
+@using FieldDataPluginFramework.DataModel.ChannelMeasurements
+@using FieldDataPluginFramework.DataModel.DischargeActivities
+@using FieldDataPluginFramework.DataModel.Meters
+
+@inherits Microsoft.AspNetCore.Components.ComponentBase
+
+@code {
+    private DischargeActivity _activity;
+    [Parameter] public DischargeActivity Activity
+    {
+        get => _activity;
+        set
+        {
+            _activity = value;
+            SetupTabDisplayNames();
+        }
+    }
+
+    private int SelectedTab { get; set; }
+    private void Select(int index) => SelectedTab = index;
+
+    private enum Tab
+    {
+        GageHeightMeasurements = 0,
+        PanelDischarges = 1,
+        AdcpDischarges = 2,
+        OtherDischarges = 3,
+        VolumetricDischarges = 4,
+        EngineeredStructureDischarges = 5,
+    }
+
+    private Dictionary<Tab, string> TabDisplayNames = new Dictionary<Tab, string>();
+
+    private void SetupTabDisplayNames()
+    {
+        TabDisplayNames.Clear();
+        if (Activity == null) return;
+
+        var gageHeightCount = Activity.GageHeightMeasurements.Count();
+        var panelDischargeCount = PanelDischarges(Activity.ChannelMeasurements).Count();
+        var adcpDischargeCount = AdcpDischarges(Activity.ChannelMeasurements).Count();
+        var otherDischargeCount = OtherDischarges(Activity.ChannelMeasurements).Count();
+        var volumetricDischargeCount = VolumetricDischarges(Activity.ChannelMeasurements).Count();
+        var engineeredStructureDischargeCount = EngineeredStructureDischarges(Activity.ChannelMeasurements).Count();
+
+        TabDisplayNames[Tab.GageHeightMeasurements] = "Gage Height Measurements" + (gageHeightCount > 0 ? $" ({gageHeightCount})" : "");
+        TabDisplayNames[Tab.PanelDischarges] = "Panel Discharges" + (panelDischargeCount > 0 ? $" ({panelDischargeCount})" : "");
+        TabDisplayNames[Tab.AdcpDischarges] = "ADCP Discharges" + (adcpDischargeCount > 0 ? $" ({adcpDischargeCount})" : "");
+        TabDisplayNames[Tab.OtherDischarges] = "Other Discharges" + (otherDischargeCount > 0 ? $" ({otherDischargeCount})" : "");
+        TabDisplayNames[Tab.VolumetricDischarges] = "Volumetric Discharges" + (volumetricDischargeCount > 0 ? $" ({volumetricDischargeCount})" : "");
+        TabDisplayNames[Tab.EngineeredStructureDischarges] = "Engineered Structure Discharges" + (engineeredStructureDischargeCount > 0 ? $" ({engineeredStructureDischargeCount})" : "");
+    }
+
+    private string DischargeSummary()
+    {
+        if (Activity == null) return string.Empty;
+
+        return @VisitHelpers.Measurement(Activity.Discharge);
+    }
+
+    private string MeterCalibration(MeterCalibration calibration)
+    {
+        if (calibration == null) return null;
+        var list = new List<string> { $"Meter Type: {calibration.MeterType}" };
+        if (!string.IsNullOrWhiteSpace(calibration.Configuration)) list.Add($"Configuration: {calibration.Configuration}");
+        if (!string.IsNullOrWhiteSpace(calibration.Manufacturer)) list.Add($"Manufacturer: {calibration.Manufacturer}");
+        if (!string.IsNullOrWhiteSpace(calibration.Model)) list.Add($"Model: {calibration.Model}");
+        if (!string.IsNullOrWhiteSpace(calibration.SerialNumber)) list.Add($"SerialNumber: {calibration.SerialNumber}");
+        if (!string.IsNullOrWhiteSpace(calibration.SoftwareVersion)) list.Add($"SoftwareVersion: {calibration.SoftwareVersion}");
+        if (!string.IsNullOrWhiteSpace(calibration.FirmwareVersion)) list.Add($"FirmwareVersion: {calibration.FirmwareVersion}");
+        if (calibration.Equations.Any()) list.Add($"Equations: [{string.Join(", ", calibration.Equations.Select(MeterCalibrationEquation))}]");
+        return string.Join(", ", list);
+    }
+
+    private string MeterCalibrationEquation(MeterCalibrationEquation equation)
+    {
+        var builder = new StringBuilder();
+        builder.Append($"Slope={equation.Slope} Intercept={equation.Intercept} ({equation.InterceptUnitId})");
+        if (equation.RangeStart.HasValue) builder.Append($" RangeStart={equation.RangeStart}");
+        if (equation.RangeEnd.HasValue) builder.Append($" RangeEnd={equation.RangeEnd}");
+        return builder.ToString();
+    }
+
+    private string AdjustmentSummary(DischargeActivity discharge)
+    {
+        if (discharge?.AdjustmentAmount == null) return null;
+        return $"Adjusted by {discharge.AdjustmentAmount} ({discharge.AdjustmentType}) Reason={discharge.ReasonForAdjustment})";
+    }
+
+    private string QualityAssuranceSummary(DischargeActivity discharge)
+    {
+        if (discharge == null) return null;
+        var builder = new StringBuilder();
+        if (discharge.ActiveUncertaintyType != UncertaintyType.None)
+        {
+            builder.Append($"Active Uncertainty Type: {discharge.ActiveUncertaintyType} ");
+            if (discharge.QualitativeUncertainty.HasValue) builder.Append($"{discharge.QualitativeUncertainty} ");
+            if (discharge.QuantitativeUncertainty.HasValue) builder.Append($"{discharge.QuantitativeUncertainty} ");
+        }
+        if (!string.IsNullOrWhiteSpace(discharge.QualityAssuranceComments)) builder.Append($"{discharge.QualityAssuranceComments}");
+        return builder.ToString();
+    }
+
+    private List<AdcpDischargeSection> AdcpDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
+    {
+        return channelMeasurements.Select(m => m as AdcpDischargeSection).Where(s => s != null).ToList();
+    }
+
+    private List<ManualGaugingDischargeSection> PanelDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
+    {
+        return channelMeasurements.Select(m => m as ManualGaugingDischargeSection).Where(s => s != null).ToList();
+    }
+
+    private List<OtherDischargeSection> OtherDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
+    {
+        return channelMeasurements.Select(m => m as OtherDischargeSection).Where(s => s != null).ToList();
+    }
+
+    private List<VolumetricDischarge> VolumetricDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
+    {
+        return channelMeasurements.Select(m => m as VolumetricDischarge).Where(s => s != null).ToList();
+    }
+
+    private List<EngineeredStructureDischarge> EngineeredStructureDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
+    {
+        return channelMeasurements.Select(m => m as EngineeredStructureDischarge).Where(s => s != null).ToList();
+    }
+}
+
+<details class="discharge-panel" style="margin-bottom:12px;">
+    <summary style="font-weight:bold; cursor:pointer;">@DischargeSummary()</summary>
+
+    <div>
+        <table class="RTable">
+            <thead>
+                <tr>
+                    <th>MeasurementId</th>
+                    <th>StartTime</th>
+                    <th>EndTime</th>
+                    <th>MeasurementTime</th>
+                    <th>Total Discharge</th>
+                    <th>Adjustment</th>
+                    <th>Mean Index Velocity</th>
+                    <th>Party</th>
+                    <th>Comments</th>
+                    <th>Grade</th>
+                    <th>Quality Assurance</th>
+                    <th>Show in DCT?</th>
+                    <th>Show in RDT?</th>
+                    <th>Prevent Auto Publish?</th>
+                    <th>Mean Gage Height Difference During Visit</th>
+                    <th>Manually Calculated Mean Gage Height</th>
+                    <th>Gage Height Adjustment Amount</th>
+                    <th>Gage Height Reference Point Name</th>
+                    <th>Gage Height Comments</th>
+                    <th>Gage Height Measurements</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@Activity.MeasurementId</td>
+                    <td>@Activity.MeasurementStartTime</td>
+                    <td>@Activity.MeasurementEndTime</td>
+                    <td>@Activity.MeasurementTime</td>
+                    <td>@VisitHelpers.Measurement(Activity.Discharge)</td>
+                    <td>@AdjustmentSummary(Activity)</td>
+                    <td>@VisitHelpers.Measurement(Activity.MeanIndexVelocity)</td>
+                    <td>@Activity.Party</td>
+                    <td>@Activity.Comments</td>
+                    <td>@VisitHelpers.Grade(Activity.MeasurementGrade)</td>
+                    <td>@QualityAssuranceSummary(Activity)</td>
+                    <td>@Activity.ShowInDataCorrection</td>
+                    <td>@Activity.ShowInRatingDevelopment</td>
+                    <td>@Activity.PreventAutomaticPublishing</td>
+                    <td>@VisitHelpers.Measurement(Activity.MeanGageHeightDifferenceDuringVisit)</td>
+                    <td>@VisitHelpers.Measurement(Activity.ManuallyCalculatedMeanGageHeight)</td>
+                    <td>@Activity.GageHeightAdjustmentAmount</td>
+                    <td>@Activity.GageHeightReferencePointName</td>
+                    <td>@Activity.GageHeightComments</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="tab-row">
+        @foreach (var kvp in TabDisplayNames)
+        {
+            <button class="tab-button" style="margin-right:6px; padding:4px 8px;" @onclick="() => Select((int)kvp.Key)">
+                @kvp.Value
+            </button>
+        }
+    </div>
+
+    <div class="tab-content">
+        @switch ((Tab)SelectedTab)
+        {
+            case Tab.GageHeightMeasurements:
+                <div>
+                    @if (Activity.GageHeightMeasurements.Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Value</th>
+                                    <th>Include?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in Activity.GageHeightMeasurements)
+                                {
+                                    <tr>
+                                        <td>@m.MeasurementTime</td>
+                                        <td>@VisitHelpers.Measurement(m.GageHeight)</td>
+                                        <td>@m.Include</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No gage height measurements.</div>
+                    }
+                </div>
+                break;
+
+            case Tab.PanelDischarges:
+                <div>
+                @if (PanelDischarges(Activity.ChannelMeasurements).Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Section Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Channel Name</th>
+                                    <th>Section Discharge</th>
+                                    <th>Width</th>
+                                    <th>Area</th>
+                                    <th>Velocity Average</th>
+                                    <th>Discharge Method</th>
+                                    <th>Deployment Method</th>
+                                    <th>Start Point</th>
+                                    <th>Meter Suspension</th>
+                                    <th>Velocity Observation Method</th>
+                                    <th>Number of Verticals</th>
+                                    <th>Meter Calibration</th>
+                                    <th>Party</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var panel in PanelDischarges(Activity.ChannelMeasurements))
+                                {
+                                    <tr>
+                                        <td>Panel</td>
+                                        <td>@panel.MeasurementStartTime</td>
+                                        <td>@panel.MeasurementEndTime</td>
+                                        <td>@panel.ChannelName</td>
+                                        <td>@VisitHelpers.Measurement(panel.Discharge)</td>
+                                        <td>@VisitHelpers.Measurement(panel.Width)</td>
+                                        <td>@VisitHelpers.Measurement(panel.Area)</td>
+                                        <td>@VisitHelpers.Measurement(panel.VelocityAverage)</td>
+                                        <td>@panel.DischargeMethod</td>
+                                        <td>@panel.DeploymentMethod</td>
+                                        <td>@panel.StartPoint</td>
+                                        <td>@panel.MeterSuspension</td>
+                                        <td>@panel.VelocityObservationMethod</td>
+                                        <td>@panel.NumberOfVerticals</td>
+                                        <td>@MeterCalibration(panel.MeterCalibration)</td>
+                                        <td>@panel.Party</td>
+                                        <td>@panel.Comments</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No panel discharges.</div>
+                    }
+                </div>
+                break;
+
+            case Tab.AdcpDischarges:
+                <div>
+                    @if (AdcpDischarges(Activity.ChannelMeasurements).Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Section Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Channel Name</th>
+                                    <th>Section Discharge</th>
+                                    <th>Width</th>
+                                    <th>Area</th>
+                                    <th>Velocity Average</th>
+                                    <th>Device Type</th>
+                                    <th>Deployment Method</th>
+                                    <th>Number Of Transects</th>
+                                    <th>Magnetic Variation</th>
+                                    <th>Discharge Coefficient Variation</th>
+                                    <th>Percent Of Discharge Measured</th>
+                                    <th>Transducer Depth</th>
+                                    <th>Top Estimate Exponent</th>
+                                    <th>Top Estimate Method</th>
+                                    <th>Bottom Estimate Exponent</th>
+                                    <th>Bottom Estimate Method</th>
+                                    <th>Navigation Method</th>
+                                    <th>Depth Reference</th>
+                                    <th>Meter Suspension</th>
+                                    <th>Software Version</th>
+                                    <th>Firmware Version</th>
+                                    <th>Measurement Device</th>
+                                    <th>Party</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var adcp in AdcpDischarges(Activity.ChannelMeasurements))
+                                {
+                                    <tr>
+                                        <td>ADCP</td>
+                                        <td>@adcp.MeasurementStartTime</td>
+                                        <td>@adcp.MeasurementEndTime</td>
+                                        <td>@adcp.ChannelName</td>
+                                        <td>@VisitHelpers.Measurement(adcp.Discharge)</td>
+                                        <td>@VisitHelpers.Measurement(adcp.Width)</td>
+                                        <td>@VisitHelpers.Measurement(adcp.Area)</td>
+                                        <td>@VisitHelpers.Measurement(adcp.VelocityAverage)</td>
+                                        <td>@adcp.AdcpDeviceType</td>
+                                        <td>@adcp.DeploymentMethod</td>
+                                        <td>@adcp.NumberOfTransects</td>
+                                        <td>@adcp.MagneticVariation</td>
+                                        <td>@adcp.DischargeCoefficientVariation</td>
+                                        <td>@adcp.PercentOfDischargeMeasured</td>
+                                        <td>@adcp.TransducerDepth</td>
+                                        <td>@adcp.TopEstimateExponent</td>
+                                        <td>@adcp.TopEstimateMethod?.IdOrDisplayName</td>
+                                        <td>@adcp.BottomEstimateExponent</td>
+                                        <td>@adcp.BottomEstimateMethod?.IdOrDisplayName</td>
+                                        <td>@adcp.NavigationMethod?.IdOrDisplayName</td>
+                                        <td>@adcp.DepthReference</td>
+                                        <td>@adcp.MeterSuspension</td>
+                                        <td>@adcp.SoftwareVersion</td>
+                                        <td>@adcp.FirmwareVersion</td>
+                                        <td>@VisitHelpers.MeasurementDevice(adcp.MeasurementDevice)</td>
+                                        <td>@adcp.Party</td>
+                                        <td>@adcp.Comments</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No ADCP discharges.</div>
+                    }
+                </div>
+                break;
+
+            case Tab.OtherDischarges:
+                <div>
+                    @if (OtherDischarges(Activity.ChannelMeasurements).Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Section Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Channel Name</th>
+                                    <th>Section Discharge</th>
+                                    <th>Monitoring Method</th>
+                                    <th>Party</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var other in OtherDischarges(Activity.ChannelMeasurements))
+                                {
+                                    <tr>
+                                        <td>Other</td>
+                                        <td>@other.MeasurementStartTime</td>
+                                        <td>@other.MeasurementEndTime</td>
+                                        <td>@other.ChannelName</td>
+                                        <td>@VisitHelpers.Measurement(other.Discharge)</td>
+                                        <td>@other.MonitoringMethodCode</td>
+                                        <td>@other.Party</td>
+                                        <td>@other.Comments</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No other discharges.</div>
+                    }
+                </div>
+                break;
+
+            case Tab.VolumetricDischarges:
+                <div>
+                    @if (VolumetricDischarges(Activity.ChannelMeasurements).Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Section Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Channel Name</th>
+                                    <th>Section Discharge</th>
+                                    <th>Measurement Container</th>
+                                    <th>IsObserved</th>
+                                    <th>Party</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var volumetric in VolumetricDischarges(Activity.ChannelMeasurements))
+                                {
+                                    <tr>
+                                        <td>Volumetric</td>
+                                        <td>@volumetric.MeasurementStartTime</td>
+                                        <td>@volumetric.MeasurementEndTime</td>
+                                        <td>@volumetric.ChannelName</td>
+                                        <td>@VisitHelpers.Measurement(volumetric.Discharge)</td>
+                                        <td>@VisitHelpers.Measurement(volumetric.MeasurementContainer)</td>
+                                        <td>@volumetric.IsObserved</td>
+                                        <td>@volumetric.Party</td>
+                                        <td>@volumetric.Comments</td>
+
+                                        @if (volumetric.Readings.Any())
+                                        {
+                                            <td>
+                                                <table class="RTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Include?</th>
+                                                            <th>Name</th>
+                                                            <th>Duration</th>
+                                                            <th>Discharge</th>
+                                                            <th>Starting Volume</th>
+                                                            <th>Ending Volume</th>
+                                                            <th>Volume Change</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var r in volumetric.Readings)
+                                                        {
+                                                            <tr>
+                                                                <td>@r.IsUsed</td>
+                                                                <td>@r.Name</td>
+                                                                <td>@VisitHelpers.Measurement(r.DurationSeconds, "secs")</td>
+                                                                <td>@VisitHelpers.Measurement(r.Discharge, volumetric.Discharge.UnitId)</td>
+                                                                <td>@VisitHelpers.Measurement(r.StartingVolume, volumetric.MeasurementContainerUnit)</td>
+                                                                <td>@VisitHelpers.Measurement(r.EndingVolume, volumetric.MeasurementContainerUnit)</td>
+                                                                <td>@VisitHelpers.Measurement(r.VolumeChange, volumetric.MeasurementContainerUnit)</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No volumetric discharges.</div>
+                    }
+                </div>
+                break;
+
+            case Tab.EngineeredStructureDischarges:
+                <div>
+                    @if (EngineeredStructureDischarges(Activity.ChannelMeasurements).Any() == true)
+                    {
+                        <table class="RTable">
+                            <thead>
+                                <tr>
+                                    <th>Section Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Channel Name</th>
+                                    <th>Section Discharge</th>
+                                    <th>Structure Type</th>
+                                    <th>Mean Head</th>
+                                    <th>Structure Equation</th>
+                                    <th>Party</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var flume in EngineeredStructureDischarges(Activity.ChannelMeasurements))
+                                {
+                                    <tr>
+                                        <td>EngineeredStructure</td>
+                                        <td>@flume.MeasurementStartTime</td>
+                                        <td>@flume.MeasurementEndTime</td>
+                                        <td>@flume.ChannelName</td>
+                                        <td>@VisitHelpers.Measurement(flume.Discharge)</td>
+                                        <td>@flume.EngineeredStructureType</td>
+                                        <td>@VisitHelpers.Measurement(flume.MeanHead)</td>
+                                        <td>@flume.StructureEquation</td>
+                                        <td>@flume.Party</td>
+                                        <td>@flume.Comments</td>
+
+                                        @if (flume.HeadReadings.Any())
+                                        {
+                                            <td>
+                                                <table class="RTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Include?</th>
+                                                            <th>Time</th>
+                                                            <th>Head</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var r in flume.HeadReadings)
+                                                        {
+                                                            <tr>
+                                                                <td>@r.IsUsedInMean</td>
+                                                                <td>@r.ReadingTime</td>
+                                                                <td>@VisitHelpers.Measurement(r.Head, flume.MeanHeadUnitId)</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div>No engineered structure discharges.</div>
+                    }
+                </div>
+                break;
+        }
+    </div>
+</details>
