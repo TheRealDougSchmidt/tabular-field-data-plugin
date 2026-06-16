@@ -198,6 +198,7 @@ namespace TabularCsv
                 item.StartDate,
             };
         }
+
         private IEnumerable<DateTimeOffset?> GetTimes(WellRedevelopment item)
         {
             return new DateTimeOffset?[]
@@ -206,6 +207,7 @@ namespace TabularCsv
                 item.EndDate,
             };
         }
+
         private IEnumerable<DateTimeOffset?> GetTimes(WellRepair item)
         {
             return new DateTimeOffset?[]
@@ -214,6 +216,7 @@ namespace TabularCsv
                 item.EndDate,
             };
         }
+
         private IEnumerable<DateTimeOffset?> GetTimes(HydraulicTest item)
         {
             return new DateTimeOffset?[]

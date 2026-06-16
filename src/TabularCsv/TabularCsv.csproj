@@ -81,7 +81,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(ProjectDir)..\packages\Aquarius.FieldDataFramework.21.4.3\tools\PluginPackager.exe $(TargetPath) /OutputPath=$(ProjectDir)deploy\$(Configuration)\$(TargetName).plugin
-$(ProjectDir)..\packages\Aquarius.FieldDataFramework.21.4.3\tools\PluginTester.exe /Plugin=$(TargetPath) @$(ProjectDir)..\BlazorTestDrive\Examples\TesterOptions.txt</PostBuildEvent>
+    <PostBuildEvent>$(ProjectDir)..\packages\Aquarius.FieldDataFramework.25.4.1\tools\PluginPackager.exe $(TargetPath) /OutputPath=$(ProjectDir)deploy\$(Configuration)\$(TargetName).plugin
+$(ProjectDir)..\packages\Aquarius.FieldDataFramework.25.4.1\tools\PluginTester.exe /Plugin=$(TargetPath) @$(ProjectDir)..\BlazorTestDrive\Examples\TesterOptions.txt</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -1,4 +1,5 @@
 @using System.Text
+@using FieldDataPluginFramework.DataModel
 @using FieldDataPluginFramework.DataModel.ChannelMeasurements
 @using FieldDataPluginFramework.DataModel.DischargeActivities
 @using FieldDataPluginFramework.DataModel.Meters
@@ -54,14 +55,42 @@
 
     private string DischargeSummary()
     {
-        if (Activity == null) return string.Empty;
+        if (Activity?.Discharge == null) return "";
 
-        return @VisitHelpers.Measurement(Activity.Discharge);
+        var meanGageHeight = MeanGageHeight();
+
+        var measurementIdLabel = string.IsNullOrEmpty(Activity.MeasurementId) ? "" : $"[{Activity.MeasurementId}]";
+        var meanGageHeightLabel = $"@ {VisitHelpers.Measurement(meanGageHeight)}";
+        var dischargeLabel = VisitHelpers.Measurement(Activity.Discharge);
+
+        var labels = new[] { dischargeLabel, meanGageHeightLabel, measurementIdLabel }
+            .Where( s=> !string.IsNullOrEmpty(s));
+
+        return string.Join(" ", labels);
+    }
+
+    private Measurement? MeanGageHeight()
+    {
+        if (Activity == null) return null;
+
+        if (Activity.ManuallyCalculatedMeanGageHeight != null)
+            return Activity.ManuallyCalculatedMeanGageHeight;
+
+        var includedGageHeights = Activity.GageHeightMeasurements.Where(ghm => ghm.Include).ToList();
+
+        if (!includedGageHeights.Any())
+            return null;
+
+        var unitId = includedGageHeights[0].GageHeight.UnitId;
+        var height = includedGageHeights.Average(ghm => ghm.GageHeight.Value) + (Activity.GageHeightAdjustmentAmount ?? 0);
+
+        return new Measurement(height, unitId);
     }
 
     private string MeterCalibration(MeterCalibration calibration)
     {
-        if (calibration == null) return null;
+        if (calibration == null) return "";
+
         var list = new List<string> { $"Meter Type: {calibration.MeterType}" };
         if (!string.IsNullOrWhiteSpace(calibration.Configuration)) list.Add($"Configuration: {calibration.Configuration}");
         if (!string.IsNullOrWhiteSpace(calibration.Manufacturer)) list.Add($"Manufacturer: {calibration.Manufacturer}");
@@ -84,13 +113,15 @@
 
     private string AdjustmentSummary(DischargeActivity discharge)
     {
-        if (discharge?.AdjustmentAmount == null) return null;
+        if (discharge?.AdjustmentAmount == null) return "";
+
         return $"Adjusted by {discharge.AdjustmentAmount} ({discharge.AdjustmentType}) Reason={discharge.ReasonForAdjustment})";
     }
 
     private string QualityAssuranceSummary(DischargeActivity discharge)
     {
-        if (discharge == null) return null;
+        if (discharge == null) return "";
+
         var builder = new StringBuilder();
         if (discharge.ActiveUncertaintyType != UncertaintyType.None)
         {
@@ -102,29 +133,34 @@
         return builder.ToString();
     }
 
+    private static List<T> FilterChannelMeasurements<T>(IEnumerable<ChannelMeasurementBase> channelMeasurements) where T : ChannelMeasurementBase
+    {
+        return channelMeasurements.Select(m => m as T).Where(s => s != null).ToList();
+    }
+
     private List<AdcpDischargeSection> AdcpDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
     {
-        return channelMeasurements.Select(m => m as AdcpDischargeSection).Where(s => s != null).ToList();
+        return FilterChannelMeasurements<AdcpDischargeSection>(channelMeasurements);
     }
 
     private List<ManualGaugingDischargeSection> PanelDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
     {
-        return channelMeasurements.Select(m => m as ManualGaugingDischargeSection).Where(s => s != null).ToList();
+        return FilterChannelMeasurements<ManualGaugingDischargeSection>(channelMeasurements);
     }
 
     private List<OtherDischargeSection> OtherDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
     {
-        return channelMeasurements.Select(m => m as OtherDischargeSection).Where(s => s != null).ToList();
+        return FilterChannelMeasurements<OtherDischargeSection>(channelMeasurements);
     }
 
     private List<VolumetricDischarge> VolumetricDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
     {
-        return channelMeasurements.Select(m => m as VolumetricDischarge).Where(s => s != null).ToList();
+        return FilterChannelMeasurements<VolumetricDischarge>(channelMeasurements);
     }
 
     private List<EngineeredStructureDischarge> EngineeredStructureDischarges(IEnumerable<ChannelMeasurementBase> channelMeasurements)
     {
-        return channelMeasurements.Select(m => m as EngineeredStructureDischarge).Where(s => s != null).ToList();
+        return FilterChannelMeasurements<EngineeredStructureDischarge>(channelMeasurements);
     }
 }
 
@@ -135,10 +171,10 @@
         <table class="RTable">
             <thead>
                 <tr>
-                    <th>MeasurementId</th>
-                    <th>StartTime</th>
-                    <th>EndTime</th>
-                    <th>MeasurementTime</th>
+                    <th>Measurement Id</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Measurement Time</th>
                     <th>Total Discharge</th>
                     <th>Adjustment</th>
                     <th>Mean Index Velocity</th>
@@ -146,15 +182,14 @@
                     <th>Comments</th>
                     <th>Grade</th>
                     <th>Quality Assurance</th>
-                    <th>Show in DCT?</th>
-                    <th>Show in RDT?</th>
+                    <th>Show in Data Correction?</th>
+                    <th>Show in Rating Development?</th>
                     <th>Prevent Auto Publish?</th>
                     <th>Mean Gage Height Difference During Visit</th>
                     <th>Manually Calculated Mean Gage Height</th>
                     <th>Gage Height Adjustment Amount</th>
                     <th>Gage Height Reference Point Name</th>
                     <th>Gage Height Comments</th>
-                    <th>Gage Height Measurements</th>
                 </tr>
             </thead>
             <tbody>

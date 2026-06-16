@@ -57,11 +57,11 @@
         TabDisplayNames[Tab.ExtendedAttributes] = "Extended Attributes" + (Visit.ExtendedAttributes.Count > 0 ? $" ({Visit.ExtendedAttributes.Count})" : "");
     }
 
-    private string VisitId => Visit?.FieldVisitIdentifier ?? string.Empty;
+    private string VisitId => Visit?.FieldVisitIdentifier ?? "";
 
     private string VisitSummary()
     {
-        if (Visit == null) return string.Empty;
+        if (Visit == null) return "";
 
         var totalActivities = Visit.ControlConditions.Count + Visit.GageZeroFlowActivities.Count + Visit.Readings.Count +
                               Visit.Calibrations.Count + Visit.Inspections.Count + Visit.LevelSurveys.Count +
@@ -72,8 +72,7 @@
 
     private string CompletedActivities(CompletedVisitActivities activities)
     {
-        if (activities == null)
-            return null;
+        if (activities == null) return "";
 
         var list = new List<string>();
 
@@ -94,13 +93,15 @@
 
     private string Standard(Calibration calibration)
     {
-        if (calibration == null || !calibration.Standard.HasValue) return null;
+        if (calibration == null || !calibration.Standard.HasValue) return "";
+
         return $"{calibration.Standard} (${calibration.UnitId})";
     }
 
     private string StandardDetails(StandardDetails details)
     {
-        if (details == null) return null;
+        if (details == null) return "";
+
         var list = new List<string>();
         if (!string.IsNullOrEmpty(details.LotNumber)) list.Add($"Lot Number: {details.LotNumber}");
         if (!string.IsNullOrEmpty(details.StandardCode)) list.Add($"Standard Code: {details.StandardCode}");
@@ -128,13 +129,15 @@
 
     private string Qualifiers(List<ReadingQualifierPickList> qualifiers)
     {
-        if (qualifiers == null) return null;
+        if (qualifiers == null) return "";
+
         return string.Join(", ", qualifiers.Select(q => q.IdOrDisplayName));
     }
 
     private string GroundwaterDetails(GroundWaterMeasurementDetails details)
     {
-        if (details == null) return null;
+        if (details == null) return "";
+
         var list = new List<string>();
         if (details.Cut.HasValue) list.Add($"Cut: {details.Cut}");
         if (details.Hold.HasValue) list.Add($"Hold: {details.Hold}");
@@ -414,7 +417,7 @@
                                 <thead>
                                     <tr>
                                         <th>Time</th>
-                                        <th>InspectionType</th>
+                                        <th>Inspection Type</th>
                                         <th>Measurement Device</th>
                                         <th>SubLocation</th>
                                         <th>Comments</th>
@@ -449,7 +452,7 @@
                             <table class="RTable">
                                 <thead>
                                     <tr>
-                                        <th>OriginReferencePoint</th>
+                                        <th>Origin Reference Point</th>
                                         <th>Method</th>
                                         <th>Party</th>
                                         <th>Survey Period</th>

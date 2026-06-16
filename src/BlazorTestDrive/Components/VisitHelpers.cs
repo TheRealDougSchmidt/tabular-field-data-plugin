@@ -7,19 +7,22 @@ namespace BlazorTestDrive.Components
     {
         public static string Measurement(Measurement measurement)
         {
-            if (measurement == null) return null;
+            if (measurement == null) return "";
+
             return Measurement(measurement.Value, measurement.UnitId);
         }
 
         public static string Measurement(double? value, string unitId)
         {
-            if (!value.HasValue) return null;
+            if (!value.HasValue) return "";
+
             return $"{value} ({unitId})";
         }
 
         public static string MeasurementDevice(MeasurementDevice device)
         {
-            if (device == null) return null;
+            if (device == null) return "";
+
             var list = new List<string>();
             if (!string.IsNullOrEmpty(device.Manufacturer)) list.Add($"Manufacturer: {device.Manufacturer}");
             if (!string.IsNullOrEmpty(device.Model)) list.Add($"Model: {device.Model}");
@@ -29,7 +32,8 @@ namespace BlazorTestDrive.Components
 
         public static string Grade(Grade? grade)
         {
-            if (grade == null) return null;
+            if (grade == null) return "";
+
             return grade.Code.HasValue ? $"{grade.Code}" : grade.DisplayName;
         }
     }
