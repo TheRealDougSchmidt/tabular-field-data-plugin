@@ -611,7 +611,15 @@ namespace TabularCsv
         public PropertyDefinition AquiferType { get; set; }
         public PropertyDefinition Publish { get; set; }
 
-        // TODO: RelatedTimeSeriesUniqueIds and RelatedFieldVisitIdentifiers - Might not be possible since they are dynamic
+        public PropertyDefinition RelatedTimeSeriesUniqueId { get; set; }
+        public List<PropertyDefinition> RelatedTimeSeriesUniqueIds { get; set; } = new List<PropertyDefinition>();
+        private List<PropertyDefinition> _relatedTimeSeriesUniqueIdsCache;
+        public IEnumerable<PropertyDefinition> AllRelatedTimeSeriesUniqueIds => AllDefinitions(ref _relatedTimeSeriesUniqueIdsCache, RelatedTimeSeriesUniqueId, RelatedTimeSeriesUniqueIds);
+
+        public PropertyDefinition RelatedFieldVisitIdentifier { get; set; }
+        public List<PropertyDefinition> RelatedFieldVisitIdentifiers { get; set; } = new List<PropertyDefinition>();
+        private List<PropertyDefinition> _relatedFieldVisitIdentifiersCache;
+        public IEnumerable<PropertyDefinition> AllRelatedFieldVisitIdentifiers => AllDefinitions(ref _relatedFieldVisitIdentifiersCache, RelatedFieldVisitIdentifier, RelatedFieldVisitIdentifiers);
 
         public HydraulicTestResultDefinition HydraulicTestResult { get; set; }
         public List<HydraulicTestResultDefinition> HydraulicTestResults { get; set; } = new List<HydraulicTestResultDefinition>();

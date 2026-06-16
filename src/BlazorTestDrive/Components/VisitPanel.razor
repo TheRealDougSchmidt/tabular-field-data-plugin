@@ -547,8 +547,8 @@
                                                 {
                                                     <tr>
                                                         <td>@ac.StartDate</td>
-                                                        <td>@ac.WellAquiferConnectivityType</td>
-                                                        <td>@ac.WellInspectionMethodType</td>
+                                                        <td>@ac.WellAquiferConnectivityType.IdOrDisplayName</td>
+                                                        <td>@ac.WellInspectionMethodType.IdOrDisplayName</td>
                                                         <td>@ac.Comments</td>
                                                     </tr>
                                                 }
@@ -576,6 +576,13 @@
                                         <th>Start Date</th>
                                         <th>End Date</th>
                                         <th>Test Name</th>
+                                        <th>Test Context</th>
+                                        <th>Test Method</th>
+                                        <th>Aquifer Type</th>
+                                        <th>Related TimeSeries UniqueIds</th>
+                                        <th>Related FieldVisit Identifiers</th>
+                                        <th>Publish</th>
+                                        <th>Comments</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -585,6 +592,13 @@
                                             <td>@item.StartDate</td>
                                             <td>@item.EndDate</td>
                                             <td>@item.TestName</td>
+                                            <td>@item.TestContext.IdOrDisplayName</td>
+                                            <td>@item.TestMethod.IdOrDisplayName</td>
+                                            <td>@item.AquiferType.IdOrDisplayName</td>
+                                            <td>@string.Join(", ", item.RelatedTimeSeriesUniqueIds)</td>
+                                            <td>@string.Join(", ", item.RelatedFieldVisitIdentifiers)</td>
+                                            <td>@item.Publish</td>
+                                            <td>@item.Comments</td>
                                         </tr>
                                     }
                                 </tbody>

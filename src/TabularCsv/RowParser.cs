@@ -1751,6 +1751,16 @@ namespace TabularCsv
                 MergeCommentText(definition)
             );
 
+            hydraulicTest.RelatedTimeSeriesUniqueIds.AddRange(definition
+                .AllRelatedTimeSeriesUniqueIds
+                .Select(d => GetString(d))
+                .Where(id => !string.IsNullOrEmpty(id)));
+
+            hydraulicTest.RelatedFieldVisitIdentifiers.AddRange(definition
+                .AllRelatedFieldVisitIdentifiers
+                .Select(d => GetString(d))
+                .Where(id => !string.IsNullOrEmpty(id)));
+
             hydraulicTest.Results.AddRange(definition
                 .AllHydraulicTestResults
                 .Select(r => ParseHydraulicTestResult(visitInfo, r))
