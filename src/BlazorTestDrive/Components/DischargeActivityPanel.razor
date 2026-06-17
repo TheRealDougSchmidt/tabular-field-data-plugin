@@ -232,7 +232,7 @@
         {
             case Tab.GageHeightMeasurements:
                 <div>
-                    @if (Activity.GageHeightMeasurements.Any() == true)
+                    @if (Activity.GageHeightMeasurements.Any())
                     {
                         <table class="RTable">
                             <thead>
@@ -263,7 +263,7 @@
 
             case Tab.PanelDischarges:
                 <div>
-                @if (PanelDischarges(Activity.ChannelMeasurements).Any() == true)
+                @if (PanelDischarges(Activity.ChannelMeasurements).Any())
                     {
                         <table class="RTable">
                             <thead>
@@ -322,7 +322,7 @@
 
             case Tab.AdcpDischarges:
                 <div>
-                    @if (AdcpDischarges(Activity.ChannelMeasurements).Any() == true)
+                    @if (AdcpDischarges(Activity.ChannelMeasurements).Any())
                     {
                         <table class="RTable">
                             <thead>
@@ -401,7 +401,7 @@
 
             case Tab.OtherDischarges:
                 <div>
-                    @if (OtherDischarges(Activity.ChannelMeasurements).Any() == true)
+                    @if (OtherDischarges(Activity.ChannelMeasurements).Any())
                     {
                         <table class="RTable">
                             <thead>
@@ -442,7 +442,7 @@
 
             case Tab.VolumetricDischarges:
                 <div>
-                    @if (VolumetricDischarges(Activity.ChannelMeasurements).Any() == true)
+                    @if (VolumetricDischarges(Activity.ChannelMeasurements).Any())
                     {
                         <table class="RTable">
                             <thead>
@@ -518,7 +518,7 @@
 
             case Tab.EngineeredStructureDischarges:
                 <div>
-                    @if (EngineeredStructureDischarges(Activity.ChannelMeasurements).Any() == true)
+                    @if (EngineeredStructureDischarges(Activity.ChannelMeasurements).Any())
                     {
                         <table class="RTable">
                             <thead>

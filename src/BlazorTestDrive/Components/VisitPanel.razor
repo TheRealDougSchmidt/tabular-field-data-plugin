@@ -95,7 +95,7 @@
     {
         if (calibration == null || !calibration.Standard.HasValue) return "";
 
-        return $"{calibration.Standard} (${calibration.UnitId})";
+        return $"{calibration.Standard} ({calibration.UnitId})";
     }
 
     private string StandardDetails(StandardDetails details)

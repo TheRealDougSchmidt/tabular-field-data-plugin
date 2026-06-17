@@ -1605,6 +1605,10 @@ namespace TabularCsv
                     wellIntegrity.WellRepairs.Add(repair);
             }
 
+            if (!wellIntegrity.WellAquiferConnections.Any() && !wellIntegrity.WellInspections.Any()
+                && !wellIntegrity.WellRedevelopments.Any() && !wellIntegrity.WellRepairs.Any())
+                return null;    
+
             return wellIntegrity;
         }
 
@@ -1687,11 +1691,11 @@ namespace TabularCsv
             if (!attempt.HasValue)
                 return null;
 
-            var redevlopmentTypeText = GetString(definition.WellRedevelopmentMethodType);
-            if (string.IsNullOrEmpty(redevlopmentTypeText))
+            var redevelopmentTypeText = GetString(definition.WellRedevelopmentMethodType);
+            if (string.IsNullOrEmpty(redevelopmentTypeText))
                 return null;
 
-            return new WellRedevelopment(attempt.Value,interval.Start, interval.End, new WellRedevelopmentMethodTypePickList(redevlopmentTypeText))
+            return new WellRedevelopment(attempt.Value,interval.Start, interval.End, new WellRedevelopmentMethodTypePickList(redevelopmentTypeText))
             {
                 Comments = MergeCommentText(definition),
             };
