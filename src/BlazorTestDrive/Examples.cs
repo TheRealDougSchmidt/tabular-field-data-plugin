@@ -13,6 +13,11 @@ namespace BlazorTestDrive
             },
             new Example
             {
+                Id = "AirTemperatureWithExtendedAttributes",
+                Name = "Air Temperature readings with extended attributes",
+            },
+            new Example
+            {
                 Id = "SeparateTimeAndDateColumns",
                 Name = "Air Temperature readings (separate date and time columns)",
                 Description = "Same as the previous example, but the date and time values are in separate columns",

@@ -1,5 +1,6 @@
 -Data=..\..\..\BlazorTestDrive\Examples\*.csv
 /Setting=AirTemperature=@..\..\..\BlazorTestDrive\Examples\AirTemperature.toml
+/Setting=AirTemperatureWithExtendedAttributes=@..\..\..\BlazorTestDrive\Examples\AirTemperatureWithExtendedAttributes.toml
 /Setting=Aliases=@..\..\..\BlazorTestDrive\Examples\Aliases.toml
 /Setting=French=@..\..\..\BlazorTestDrive\Examples\French.toml
 /Setting=OttMFPro=@..\..\..\BlazorTestDrive\Examples\OttMFPro.toml

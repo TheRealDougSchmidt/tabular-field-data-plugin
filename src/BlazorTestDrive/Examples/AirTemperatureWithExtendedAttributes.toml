@@ -1,0 +1,11 @@
+Location = '@The Location'
+Time = '@The Time'
+
+[Reading]
+Value = '@The Temperature'
+ParameterId = 'TA'
+UnitId = 'degC'
+
+[ExtendedAttribute]
+AttributeId = '3e9dfcee40f64282ad05c58de296d22f' # Need to grab this from AQTS
+Value = '@Favourite Beatle'
