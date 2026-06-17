@@ -32,6 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Examples\HydraulicTests.csv" />
+    <EmbeddedResource Include="Examples\HydraulicTests.toml" />
     <EmbeddedResource Include="Examples\AirTemperatureWithExtendedAttributes.csv" />
     <EmbeddedResource Include="Examples\AirTemperatureWithExtendedAttributes.toml" />
     <EmbeddedResource Include="Examples\AirTemperature.csv" />

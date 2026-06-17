@@ -15,6 +15,7 @@ namespace BlazorTestDrive
             {
                 Id = "AirTemperatureWithExtendedAttributes",
                 Name = "Air Temperature readings with extended attributes",
+                Description = "This silly example sets a fictitious extended attribute value, assigning a favourite Beatle to each field visit. A real-world use case requires knowledge of a specific AQTS system's extended attribute configuration.",
             },
             new Example
             {
@@ -74,7 +75,14 @@ Uses aliases to work around old stations that have been renamed in AQUARIUS.",
                 Id = "OttMFPro",
                 Name = "OTT MF Pro *.TSV files",
                 Description = "Uses plenty of regular expressions to pull out data from an OTT MF Pro discharge summary file.",
-            }
+            },
+            new Example
+            {
+                Id = "HydraulicTests",
+                Name = "Hydraulic test data",
+                Description = "This example demonstrates how to parse hydraulic test data.",
+            },
+
         }
             .Select(LoadEmbeddedResources)
             .ToList();

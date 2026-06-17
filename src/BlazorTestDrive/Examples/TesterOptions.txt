@@ -6,6 +6,7 @@
 /Setting=OttMFPro=@..\..\..\BlazorTestDrive\Examples\OttMFPro.toml
 /Setting=ReadingsWithDatumConversion=@..\..\..\BlazorTestDrive\Examples\ReadingsWithDatumConversion.toml
 /Setting=ReadingsWithGrades=@..\..\..\BlazorTestDrive\Examples\ReadingsWithGrades.toml
+/Setting=HydraulicTests=@..\..\..\BlazorTestDrive\Examples\HydraulicTests.toml
 /Setting=SeparateTimeAndDateColumns=@..\..\..\BlazorTestDrive\Examples\SeparateTimeAndDateColumns.toml
 /Setting=Spanish=@..\..\..\BlazorTestDrive\Examples\Spanish.toml
 /Setting=StageDischargeReadingsFormat=@..\..\..\BlazorTestDrive\Examples\StageDischargeReadingsFormat.toml

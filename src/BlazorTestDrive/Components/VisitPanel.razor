@@ -583,6 +583,7 @@
                                         <th>Related FieldVisit Identifiers</th>
                                         <th>Publish</th>
                                         <th>Comments</th>
+                                        <th>Results</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -599,6 +600,35 @@
                                             <td>@string.Join(", ", item.RelatedFieldVisitIdentifiers)</td>
                                             <td>@item.Publish</td>
                                             <td>@item.Comments</td>
+                                            <td>
+                                                <h5>Hydraulic Test Results (@item.Results.Count)</h5>
+                                                @if (item.Results.Any())
+                                                {
+                                                    <table class="RTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Parameter</th>
+                                                                <th>Value</th>
+                                                                <th>Analysis Method</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var r in item.Results)
+                                                            {
+                                                                <tr>
+                                                                    <td>@r.ParameterId</td>
+                                                                    <td>@VisitHelpers.Measurement(new Measurement(r.Value, r.UnitId))</td>
+                                                                    <td>@r.AnalysisMethod</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                                else
+                                                {
+                                                    <div>No results for this hydraulic test.</div>
+                                                }
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
