@@ -8,9 +8,11 @@ using FieldDataPluginFramework.DataModel.ControlConditions;
 using FieldDataPluginFramework.DataModel.CrossSection;
 using FieldDataPluginFramework.DataModel.DischargeActivities;
 using FieldDataPluginFramework.DataModel.GageZeroFlow;
+using FieldDataPluginFramework.DataModel.HydraulicTest;
 using FieldDataPluginFramework.DataModel.Inspections;
 using FieldDataPluginFramework.DataModel.LevelSurveys;
 using FieldDataPluginFramework.DataModel.Readings;
+using FieldDataPluginFramework.DataModel.WellIntegrity;
 using FieldDataPluginFramework.Results;
 
 namespace BlazorTestDrive
@@ -237,6 +239,21 @@ namespace BlazorTestDrive
         public void AddLevelSurvey(FieldVisitInfo fieldVisit, LevelSurvey levelSurvey)
         {
             fieldVisit.LevelSurveys.Add(levelSurvey);
+        }
+
+        void IFieldDataResultsAppender.AddWellIntegrity(FieldVisitInfo fieldVisit, WellIntegrity wellIntegrity)
+        {
+            fieldVisit.WellIntegrity.Add(wellIntegrity);
+        }
+
+        void IFieldDataResultsAppender.AddHydraulicTest(FieldVisitInfo fieldVisit, HydraulicTest hydraulicTest)
+        {
+            fieldVisit.HydraulicTests.Add(hydraulicTest);
+        }
+
+        void IFieldDataResultsAppender.AddExtendedAttribute(FieldVisitInfo fieldVisit, ExtendedAttributeValue extendedAttributeValue)
+        {
+            fieldVisit.ExtendedAttributes.Add(extendedAttributeValue);
         }
     }
 }

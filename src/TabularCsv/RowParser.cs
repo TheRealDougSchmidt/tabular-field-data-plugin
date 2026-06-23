@@ -10,12 +10,14 @@ using FieldDataPluginFramework.DataModel.ChannelMeasurements;
 using FieldDataPluginFramework.DataModel.ControlConditions;
 using FieldDataPluginFramework.DataModel.DischargeActivities;
 using FieldDataPluginFramework.DataModel.GageZeroFlow;
+using FieldDataPluginFramework.DataModel.HydraulicTest;
 using FieldDataPluginFramework.DataModel.Inspections;
 using FieldDataPluginFramework.DataModel.LevelSurveys;
 using FieldDataPluginFramework.DataModel.Meters;
 using FieldDataPluginFramework.DataModel.PickLists;
 using FieldDataPluginFramework.DataModel.Readings;
 using FieldDataPluginFramework.DataModel.Verticals;
+using FieldDataPluginFramework.DataModel.WellIntegrity;
 using Humanizer;
 
 namespace TabularCsv
@@ -253,6 +255,24 @@ namespace TabularCsv
                 .Where(levelSurvey => levelSurvey != null)
                 .ToList();
 
+            var wellIntegrities = Configuration
+                .AllWellIntegrities
+                .Select(w => ParseWellIntegrity(fieldVisitInfo, w))
+                .Where(wellIntegrity => wellIntegrity != null)
+                .ToList();
+
+            var hydraulicTests = Configuration
+                .AllHydraulicTests
+                .Select(h => ParseHydraulicTest(fieldVisitInfo, h))
+                .Where(hydraulicTest => hydraulicTest != null)
+                .ToList();
+
+            var extendedAttributes = Configuration
+                .AllExtendedAttributes
+                .Select(e => ParseExtendedAttribute(fieldVisitInfo, e))
+                .Where(extendedAttribute => extendedAttribute != null)
+                .ToList();
+
             MergeParsedActivities(
                 locationInfo,
                 fieldVisitInfo,
@@ -262,7 +282,10 @@ namespace TabularCsv
                 controlConditions,
                 gageAtZeroFlows,
                 discharges,
-                levelSurveys);
+                levelSurveys,
+                wellIntegrities,
+                hydraulicTests,
+                extendedAttributes);
         }
 
         private void MergeParsedActivities(
@@ -274,7 +297,10 @@ namespace TabularCsv
             List<ControlCondition> controlConditions,
             List<GageZeroFlowActivity> gageZeroFlows,
             List<DischargeActivity> discharges,
-            List<LevelSurvey> levelSurveys)
+            List<LevelSurvey> levelSurveys,
+            List<WellIntegrity> wellIntegrities,
+            List<HydraulicTest> hydraulicTests,
+            List<ExtendedAttributeValue> extendedAttributes)
         {
             // Add all the activities to the visit
             foreach (var reading in readings)
@@ -357,6 +383,21 @@ namespace TabularCsv
             {
                 ResultsAppender.AddLevelSurvey(mergedVisit, levelSurvey);
             }
+
+            foreach (var wellIntegrity in wellIntegrities)
+            {
+                ResultsAppender.AddWellIntegrity(mergedVisit, wellIntegrity);
+            }
+
+            foreach (var hydraulicTest in hydraulicTests)
+            {
+                ResultsAppender.AddHydraulicTest(mergedVisit, hydraulicTest);
+            }
+
+            foreach (var extendedAttribute in extendedAttributes)
+            {
+                ResultsAppender.AddExtendedAttribute(mergedVisit, extendedAttribute);
+            }
         }
 
         private void ThrowIfNoVisitTimes(FieldVisitInfo fieldVisitInfo, LocationInfo locationInfo)
@@ -387,7 +428,10 @@ namespace TabularCsv
                    && !fieldVisitInfo.Calibrations.Any()
                    && !fieldVisitInfo.Inspections.Any()
                    && !fieldVisitInfo.LevelSurveys.Any()
-                   && !fieldVisitInfo.CrossSectionSurveys.Any();
+                   && !fieldVisitInfo.CrossSectionSurveys.Any()
+                   && !fieldVisitInfo.WellIntegrity.Any()
+                   && !fieldVisitInfo.HydraulicTests.Any()
+                   && !fieldVisitInfo.ExtendedAttributes.Any();
         }
 
         private bool IsVisitBlank(FieldVisitDetails details)
@@ -1524,6 +1568,247 @@ namespace TabularCsv
             {
                 Comments = MergeCommentText(definition),
             };
+        }
+
+        private WellIntegrity ParseWellIntegrity(FieldVisitInfo visitInfo, WellIntegrityDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var wellIntegrity = new WellIntegrity();
+
+            foreach(var connectionDefinition in definition.AllWellAquiferConnections)
+            {
+                var connection = ParseWellAquiferConnection(visitInfo, connectionDefinition);
+                if (connection != null)
+                    wellIntegrity.WellAquiferConnections.Add(connection);
+            }
+
+            foreach (var inspectionDefinition in definition.AllWellInspections)
+            {
+                var inspection = ParseWellInspection(visitInfo, inspectionDefinition);
+                if (inspection != null)
+                    wellIntegrity.WellInspections.Add(inspection);
+            }
+
+            foreach (var redevelopmentDefinition in definition.AllWellRedevelopments)
+            {
+                var redevelopment = ParseWellRedevelopment(visitInfo, redevelopmentDefinition);
+                if (redevelopment != null)
+                    wellIntegrity.WellRedevelopments.Add(redevelopment);
+            }
+
+            foreach (var repairDefinition in definition.AllWellRepairs)
+            {
+                var repair = ParseWellRepair(visitInfo, repairDefinition);
+                if (repair != null)
+                    wellIntegrity.WellRepairs.Add(repair);
+            }
+
+            if (!wellIntegrity.WellAquiferConnections.Any() && !wellIntegrity.WellInspections.Any()
+                && !wellIntegrity.WellRedevelopments.Any() && !wellIntegrity.WellRepairs.Any())
+                return null;    
+
+            return wellIntegrity;
+        }
+
+        private WellAquiferConnection ParseWellAquiferConnection(FieldVisitInfo visitInfo, WellAquiferConnectionDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var startDate = ParseActivityTime(visitInfo, definition);
+
+            var wellAquiferConnectivityTypeText = GetString(definition.WellAquiferConnectivityType);
+            if (string.IsNullOrEmpty(wellAquiferConnectivityTypeText))
+                return null;
+
+            var wellInspectionMethodTypeText = GetString(definition.WellInspectionMethodType);
+            if (string.IsNullOrEmpty(wellInspectionMethodTypeText))
+                return null;
+
+            return new WellAquiferConnection(startDate, new WellAquiferConnectivityTypePickList(wellAquiferConnectivityTypeText), new WellInspectionMethodTypePickList(wellInspectionMethodTypeText))
+            {
+                Comments = MergeCommentText(definition),
+            };
+        }
+
+        private WellInspection ParseWellInspection(FieldVisitInfo visitInfo, WellInspectionDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var startDate = ParseActivityTime(visitInfo, definition);
+
+            var wellComponentTypeText = GetString(definition.WellComponentType);
+            if (string.IsNullOrEmpty(wellComponentTypeText))
+                return null;
+
+            var wellConditionTypeText = GetString(definition.WellConditionType);
+            if (string.IsNullOrEmpty(wellConditionTypeText))
+                return null;
+
+            var distanceFrom = GetNullableDouble(definition.DistanceFrom);
+            if (!distanceFrom.HasValue)
+                return null;
+
+            var distanceTo = GetNullableDouble(definition.DistanceTo);
+            if (!distanceTo.HasValue)
+                return null;
+
+            var distanceUnitId = GetString(definition.DistanceUnitId);
+            if (string.IsNullOrEmpty(distanceUnitId))
+                return null;
+
+            var wellInspectionMethodText = GetString(definition.WellInspectionMethod);
+            if (string.IsNullOrEmpty(wellInspectionMethodText))
+                return null;
+
+            return new WellInspection(
+                startDate,
+                new WellComponentTypePickList(wellComponentTypeText),
+                new WellConditionTypePickList(wellConditionTypeText),
+                distanceFrom.Value,
+                distanceTo.Value,
+                distanceUnitId,
+                new WellInspectionMethodPickList(wellInspectionMethodText)
+            )
+            {
+                Comments = MergeCommentText(definition),
+            };
+        }
+
+        private WellRedevelopment ParseWellRedevelopment(FieldVisitInfo visitInfo, WellRedevelopmentDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var interval = ParseActivityTimeRange(visitInfo, definition);
+            if (interval == null)
+                return null;
+
+            var attempt = GetNullableInteger(definition.Attempt);
+            if (!attempt.HasValue)
+                return null;
+
+            var redevelopmentTypeText = GetString(definition.WellRedevelopmentMethodType);
+            if (string.IsNullOrEmpty(redevelopmentTypeText))
+                return null;
+
+            return new WellRedevelopment(attempt.Value,interval.Start, interval.End, new WellRedevelopmentMethodTypePickList(redevelopmentTypeText))
+            {
+                Comments = MergeCommentText(definition),
+            };
+        }
+
+        private WellRepair ParseWellRepair(FieldVisitInfo visitInfo, WellRepairDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var interval = ParseActivityTimeRange(visitInfo, definition);
+            if (interval == null)
+                return null;
+
+            var repairTypeText = GetString(definition.WellRepairType);
+            if (string.IsNullOrEmpty(repairTypeText))
+                return null;
+
+            return new WellRepair(interval.Start, interval.End, new WellRepairTypePickList(repairTypeText))
+            { 
+                Comments = MergeCommentText(definition),
+            };
+        }
+
+        private HydraulicTest ParseHydraulicTest(FieldVisitInfo visitInfo, HydraulicTestDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var testInterval = ParseActivityTimeRange(visitInfo, definition);
+            if (testInterval == null)
+                return null;
+
+            var testName = GetString(definition.TestName);
+            if (string.IsNullOrEmpty(testName))
+                return null;
+
+            var testContextText = GetString(definition.TestContext);
+            if (string.IsNullOrEmpty(testContextText))
+                return null;
+
+            var testMethodText = GetString(definition.TestMethod);
+            if (string.IsNullOrEmpty(testMethodText))
+                return null;
+
+            var aquiferTypeText = GetString(definition.AquiferType);
+            if (string.IsNullOrEmpty(aquiferTypeText))
+                return null;
+
+            var hydraulicTest = new HydraulicTest(
+                testName,
+                new HydraulicTestContextPickList(testContextText),
+                new HydraulicTestMethodPickList(testMethodText),
+                new HydraulicTestAquiferTypePickList(aquiferTypeText),
+                testInterval.Start,
+                testInterval.End,
+                MergeCommentText(definition)
+            );
+
+            hydraulicTest.RelatedTimeSeriesUniqueIds.AddRange(definition
+                .AllRelatedTimeSeriesUniqueIds
+                .Select(d => GetString(d))
+                .Where(id => !string.IsNullOrEmpty(id)));
+
+            hydraulicTest.RelatedFieldVisitIdentifiers.AddRange(definition
+                .AllRelatedFieldVisitIdentifiers
+                .Select(d => GetString(d))
+                .Where(id => !string.IsNullOrEmpty(id)));
+
+            hydraulicTest.Results.AddRange(definition
+                .AllHydraulicTestResults
+                .Select(r => ParseHydraulicTestResult(visitInfo, r))
+                .Where(r => r != null));
+
+            return hydraulicTest;
+        }
+
+        private HydraulicTestResult ParseHydraulicTestResult(FieldVisitInfo visitInfo, HydraulicTestResultDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var parameterId = GetString(definition.ParameterId);
+            if (string.IsNullOrEmpty(parameterId))
+                return null;
+
+            var unitId = GetString(definition.UnitId);
+            if (string.IsNullOrEmpty(unitId))
+                return null;
+
+            var analysisMethod = GetString(definition.AnalysisMethod);
+            if (string.IsNullOrEmpty(analysisMethod))
+                return null;
+
+            var value = GetNullableDouble(definition.Value);
+            if (!value.HasValue)
+                return null;
+
+            return new HydraulicTestResult(parameterId, unitId, analysisMethod, value.Value);
+        }
+
+        private ExtendedAttributeValue ParseExtendedAttribute(FieldVisitInfo visitInfo, ExtendedAttributeDefinition definition)
+        {
+            if (IsDefinitionDisabled(definition))
+                return null;
+
+            var uniqueId = GetString(definition.AttributeId);
+            if (string.IsNullOrEmpty(uniqueId))
+                return null;
+
+            var value = GetString(definition.Value);
+
+            return new ExtendedAttributeValue(uniqueId, value);
         }
 
         private bool? GetNullableBoolean(ColumnDefinition column)

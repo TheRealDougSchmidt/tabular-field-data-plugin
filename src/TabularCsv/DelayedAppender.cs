@@ -10,9 +10,11 @@ using FieldDataPluginFramework.DataModel.ChannelMeasurements;
 using FieldDataPluginFramework.DataModel.ControlConditions;
 using FieldDataPluginFramework.DataModel.DischargeActivities;
 using FieldDataPluginFramework.DataModel.GageZeroFlow;
+using FieldDataPluginFramework.DataModel.HydraulicTest;
 using FieldDataPluginFramework.DataModel.Inspections;
 using FieldDataPluginFramework.DataModel.LevelSurveys;
 using FieldDataPluginFramework.DataModel.Readings;
+using FieldDataPluginFramework.DataModel.WellIntegrity;
 using FieldDataPluginFramework.Results;
 using Humanizer;
 
@@ -100,6 +102,8 @@ namespace TabularCsv
                 .Concat(visit.DischargeActivities.SelectMany(GetTimes))
                 .Concat(visit.GageZeroFlowActivities.SelectMany(GetTimes))
                 .Concat(visit.ControlConditions.SelectMany(GetTimes))
+                .Concat(visit.WellIntegrity.SelectMany(GetTimes))
+                .Concat(visit.HydraulicTests.SelectMany(GetTimes))
                 .Where(dt => dt.HasValue)
                 .Select(dt => dt.Value);
         }
@@ -168,6 +172,60 @@ namespace TabularCsv
             };
         }
 
+        private IEnumerable<DateTimeOffset?> GetTimes(WellIntegrity item)
+        {
+            return new DateTimeOffset?[]
+            {
+            }
+            .Concat(item.WellAquiferConnections.SelectMany(GetTimes))
+            .Concat(item.WellInspections.SelectMany(GetTimes))
+            .Concat(item.WellRedevelopments.SelectMany(GetTimes))
+            .Concat(item.WellRepairs.SelectMany(GetTimes));
+        }
+
+        private IEnumerable<DateTimeOffset?> GetTimes(WellAquiferConnection item)
+        {
+            return new DateTimeOffset?[]
+            {
+                item.StartDate,
+            };
+        }
+
+        private IEnumerable<DateTimeOffset?> GetTimes(WellInspection item)
+        {
+            return new DateTimeOffset?[]
+            {
+                item.StartDate,
+            };
+        }
+
+        private IEnumerable<DateTimeOffset?> GetTimes(WellRedevelopment item)
+        {
+            return new DateTimeOffset?[]
+            {
+                item.StartDate,
+                item.EndDate,
+            };
+        }
+
+        private IEnumerable<DateTimeOffset?> GetTimes(WellRepair item)
+        {
+            return new DateTimeOffset?[]
+            {
+                item.StartDate,
+                item.EndDate,
+            };
+        }
+
+        private IEnumerable<DateTimeOffset?> GetTimes(HydraulicTest item)
+        {
+            return new DateTimeOffset?[]
+            {
+                item.StartDate,
+                item.EndDate,
+            };
+        }
+
         private void AppendDelayedVisit(FieldVisitInfo delayedVisit)
         {
             var visit = ActualAppender.AddFieldVisit(delayedVisit.LocationInfo, delayedVisit.FieldVisitDetails);
@@ -210,6 +268,21 @@ namespace TabularCsv
             foreach (var crossSectionSurvey in delayedVisit.CrossSectionSurveys)
             {
                 ActualAppender.AddCrossSectionSurvey(visit, crossSectionSurvey);
+            }
+
+            foreach (var wellIntegrity in delayedVisit.WellIntegrity)
+            {
+                ActualAppender.AddWellIntegrity(visit, wellIntegrity);
+            }
+
+            foreach (var hydraulicTest in delayedVisit.HydraulicTests)
+            {
+                ActualAppender.AddHydraulicTest(visit, hydraulicTest);
+            }
+
+            foreach (var extendedAttribute in delayedVisit.ExtendedAttributes)
+            {
+                ActualAppender.AddExtendedAttribute(visit, extendedAttribute);
             }
         }
 
@@ -340,6 +413,21 @@ namespace TabularCsv
         public void AddGageZeroFlowActivity(FieldVisitInfo fieldVisit, GageZeroFlowActivity gageZeroFlowActivity)
         {
             fieldVisit.GageZeroFlowActivities.Add(gageZeroFlowActivity);
+        }
+
+        public void AddWellIntegrity(FieldVisitInfo fieldVisit, WellIntegrity wellIntegrity)
+        {
+            fieldVisit.WellIntegrity.Add(wellIntegrity);
+        }
+
+        public void AddHydraulicTest(FieldVisitInfo fieldVisit, HydraulicTest hydraulicTest)
+        {
+            fieldVisit.HydraulicTests.Add(hydraulicTest);
+        }
+
+        public void AddExtendedAttribute(FieldVisitInfo fieldVisit, ExtendedAttributeValue extendedAttributeValue)
+        {
+            fieldVisit.ExtendedAttributes.Add(extendedAttributeValue);
         }
 
         public Dictionary<string, string> GetPluginConfigurations()

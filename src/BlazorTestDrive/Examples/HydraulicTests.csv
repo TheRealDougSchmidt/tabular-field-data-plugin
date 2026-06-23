@@ -1,0 +1,3 @@
+The Location, The Time, TestName, TestContext, TestMethod, AquiferType, Parameter1, Unit1, Method1, Value1, Parameter2, Unit2, Method2, Value2
+LOC1, 2020-Jan-12 12:35, a test, a context, a method, an aquifer
+LOC2, 1988-Aug-8 15:10, tn, tc, tm, aq, HG, ft, None, 25, TA, degC, None, 20

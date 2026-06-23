@@ -1,0 +1,20 @@
+Location = '@The Location'
+Time = '@The Time'
+
+[HydraulicTest]
+TestName = '@TestName'
+TestContext = '@TestContext'
+TestMethod = '@TestMethod'
+AquiferType = '@AquiferType'
+
+[[HydraulicTest.HydraulicTestResults]]
+ParameterId = '@Parameter1'
+UnitId = '@Unit1'
+AnalysisMethod = '@Method1'
+Value = '@Value1'
+
+[[HydraulicTest.HydraulicTestResults]]
+ParameterId = '@Parameter2'
+UnitId = '@Unit2'
+AnalysisMethod = '@Method2'
+Value = '@Value2'
